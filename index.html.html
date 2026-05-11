@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cell Calc">
+<title>Cell Seeding Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: rgba(255,255,255,0.08);
+    --accent: #4ade9a;
+    --accent2: #38bdf8;
+    --accent3: #f472b6;
+    --text: #f0f0f0;
+    --muted: #8b8fa8;
+    --danger: #f87171;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  .header {
+    padding: 56px 20px 20px;
+    background: linear-gradient(180deg, #1a1d27 0%, transparent 100%);
+  }
+
+  .header-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  /* TAB BAR */
+  .tab-bar {
+    display: flex;
+    gap: 6px;
+    padding: 0 20px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0f1117;
+    font-weight: 500;
+  }
+
+  /* PANELS */
+  .panel { display: none; padding: 0 20px; }
+  .panel.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* INPUTS */
+  .field { margin-bottom: 16px; }
+
+  .field-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  input[type="number"] {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 12px 14px;
+    outline: none;
+    -webkit-appearance: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  .unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 36px;
+  }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+
+  /* RESULTS */
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .result-box {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+
+  .result-box.highlight {
+    background: rgba(74, 222, 154, 0.1);
+    border: 1px solid rgba(74, 222, 154, 0.3);
+    grid-column: 1 / -1;
+  }
+
+  .result-box-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .result-box-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .result-box.highlight .result-box-value {
+    font-size: 28px;
+    color: var(--accent);
+  }
+
+  .result-box-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* NOTE */
+  .note {
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-top: 14px;
+    line-height: 1.6;
+  }
+
+  .note.warn {
+    color: var(--danger);
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin: 24px 0 12px;
+  }
+
+  /* BOTTOM NAV safe area */
+  .safe-bottom { height: env(safe-area-inset-bottom, 20px); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">L4L Lab — Waad</div>
+  <h1>Cell Seeding<br>Calculator</h1>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="showTab('count', this)">Count cells</button>
+  <button class="tab" onclick="showTab('j2even', this)">J2 — even split</button>
+  <button class="tab" onclick="showTab('j2count', this)">J2 — by count</button>
+  <button class="tab" onclick="showTab('hbec', this)">HBECs</button>
+</div>
+
+<!-- PANEL 1: Count cells -->
+<div class="panel active" id="panel-count">
+  <div class="card">
+    <div class="card-label">Haemocytometer → concentration</div>
+
+    <div class="field">
+      <label class="field-label">Total cells counted</label>
+      <div class="field-row">
+        <input type="number" id="c_counted" value="50" min="1" inputmode="numeric" oninput="calcCount()">
+        <span class="unit">cells</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Number of squares counted</label>
+      <div class="field-row">
+        <input type="number" id="c_squares" value="1" min="1" max="9" inputmode="numeric" oninput="calcCount()">
+        <span class="unit">squares</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Suspension volume in falcon tube</label>
+      <div class="field-row">
+        <input type="number" id="c_vol" value="5" min="0.1" step="0.5" inputmode="decimal" oninput="calcCount()">
+        <span class="unit">mL</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="result-grid">
+      <div class="result-box">
+        <div class="result-box-label">Avg per square</div>
+        <div class="result-box-value" id="c_avg">—</div>
+        <div class="result-box-sub">cells / square</div>
+      </div>
+      <div class="result-box">
+        <div class="result-box-label">Concentration</div>
+        <div class="result-box-value" id="c_conc">—</div>
+        <div class="result-box-sub">cells / mL</div>
+      </div>
+      <div class="result-box highlight">
+        <div class="result-box-label">Total cells</div>
+        <div class="result-box-value" id="c_total">—</div>
+        <div class="result-box-sub">in tube</div>
+      </div>
+    </div>
+
+    <div class="note">(counted ÷ squares) × 10,000 = cells/mL &nbsp;·&nbsp; cells/mL × volume = total</div>
+  </div>
+</div>
+
+<!-- PANEL 2: J2 even split -->
+<div class="panel" id="panel-j2even">
+  <div class="card">
+    <div class="card-label">Split evenly across flasks</div>
+
+    <div class="field">
+      <label class="field-label">Total suspension volume in falcon tube</label>
+      <div class="field-row">
+        <input type="number" id="je_vol" value="5" step="0.5" min="0.1" inputmode="decimal" oninput="calcJ2Even()">
+        <span class="unit">mL</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Number of T25 flasks you have</label>
+      <div class="field-row">
+        <input type="number" id="je_flasks" value="10" min="1" inputmode="numeric" oninput="calcJ2Even()">
+        <span class="unit">flasks</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="result-grid">
+      <div class="result-box highlight">
+        <div class="result-box-label">Add to each flask</div>
+        <div class="result-box-value" id="je_result">—</div>
+        <div class="result-box-sub">mL suspension per T25</div>
+      </div>
+    </div>
+
+    <div class="note">Mix suspension well before pipetting so cells are evenly distributed.</div>
+  </div>
+</div>
+
+<!-- PANEL 3: J2 by count -->
+<div class="panel" id="panel-j2count">
+  <div class="card">
+    <div class="card-label">Calculate by precise cell count</div>
+
+    <div class="field">
+      <label class="field-label">Total cells counted</label>
+      <div class="field-row">
+        <input type="number" id="jc_counted" value="50" min="1" inputmode="numeric" oninput="calcJ2Count()">
+        <span class="unit">cells</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Number of squares counted</label>
+      <div class="field-row">
+        <input type="number" id="jc_squares" value="1" min="1" max="9" inputmode="numeric" oninput="calcJ2Count()">
+        <span class="unit">squares</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Suspension volume in falcon tube</label>
+      <div class="field-row">
+        <input type="number" id="jc_vol" value="5" step="0.5" inputmode="decimal" oninput="calcJ2Count()">
+        <span class="unit">mL</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Target cells per T25 flask</label>
+      <div class="field-row">
+        <input type="number" id="jc_perflask" value="300000" step="1" inputmode="numeric" oninput="calcJ2Count()">
+        <span class="unit">cells</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="result-grid">
+      <div class="result-box">
+        <div class="result-box-label">Concentration</div>
+        <div class="result-box-value" id="jc_conc">—</div>
+        <div class="result-box-sub">cells / mL</div>
+      </div>
+      <div class="result-box">
+        <div class="result-box-label">Volume per flask</div>
+        <div class="result-box-value" id="jc_vol_per">—</div>
+        <div class="result-box-sub">mL to add</div>
+      </div>
+      <div class="result-box highlight">
+        <div class="result-box-label">Flasks you can make</div>
+        <div class="result-box-value" id="jc_maxflasks">—</div>
+        <div class="result-box-sub">T25 feeder flasks</div>
+      </div>
+    </div>
+
+    <div class="note">A confluent T75 gives ~6 × 10⁶ cells · Each T25 needs 0.3–0.5 × 10⁶ cells</div>
+  </div>
+</div>
+
+<!-- PANEL 4: HBECs -->
+<div class="panel" id="panel-hbec">
+  <div class="card">
+    <div class="card-label">6-well plate seeding</div>
+
+    <div class="field">
+      <label class="field-label">Total cells counted</label>
+      <div class="field-row">
+        <input type="number" id="h_counted" value="50" min="1" inputmode="numeric" oninput="calcHBEC()">
+        <span class="unit">cells</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Number of squares counted</label>
+      <div class="field-row">
+        <input type="number" id="h_squares" value="1" min="1" max="9" inputmode="numeric" oninput="calcHBEC()">
+        <span class="unit">squares</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Suspension volume in falcon tube</label>
+      <div class="field-row">
+        <input type="number" id="h_vol" value="5" step="0.5" inputmode="decimal" oninput="calcHBEC()">
+        <span class="unit">mL</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Cells needed per well</label>
+      <div class="field-row">
+        <input type="number" id="h_perwell" value="500000" step="1" inputmode="numeric" oninput="calcHBEC()">
+        <span class="unit">cells</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Number of wells to seed</label>
+      <div class="field-row">
+        <input type="number" id="h_wells" value="6" min="1" max="6" inputmode="numeric" oninput="calcHBEC()">
+        <span class="unit">wells</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="result-grid">
+      <div class="result-box">
+        <div class="result-box-label">Concentration</div>
+        <div class="result-box-value" id="h_conc">—</div>
+        <div class="result-box-sub">cells / mL</div>
+      </div>
+      <div class="result-box">
+        <div class="result-box-label">Total cells</div>
+        <div class="result-box-value" id="h_total">—</div>
+        <div class="result-box-sub">available</div>
+      </div>
+      <div class="result-box highlight">
+        <div class="result-box-label">Suspension per well</div>
+        <div class="result-box-value" id="h_suspvol">—</div>
+        <div class="result-box-sub">mL cell suspension to add</div>
+      </div>
+      <div class="result-box highlight" style="background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.3);">
+        <div class="result-box-label">Media per well (add first)</div>
+        <div class="result-box-value" id="h_mediavol" style="color: var(--accent2);">—</div>
+        <div class="result-box-sub">mL FMED before cells</div>
+      </div>
+    </div>
+
+    <div class="note" id="h_warn">Add media to each well first, then add your cell suspension on top. Total = 2 mL per well.</div>
+  </div>
+</div>
+
+<div class="safe-bottom"></div>
+
+<script>
+function fmt(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + ' ×10⁶ (' + n.toLocaleString() + ')';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k (' + n.toLocaleString() + ')';
+  return n.toFixed(2);
+}
+
+function showTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function calcCount() {
+  const counted = parseFloat(document.getElementById('c_counted').value) || 0;
+  const squares = parseFloat(document.getElementById('c_squares').value) || 1;
+  const vol = parseFloat(document.getElementById('c_vol').value) || 0;
+  const avg = counted / squares;
+  const conc = avg * 10000;
+  const total = conc * vol;
+  document.getElementById('c_avg').textContent = avg.toFixed(1);
+  document.getElementById('c_conc').textContent = fmt(conc);
+  document.getElementById('c_total').textContent = fmt(total);
+}
+
+function calcJ2Even() {
+  const vol = parseFloat(document.getElementById('je_vol').value) || 0;
+  const flasks = parseFloat(document.getElementById('je_flasks').value) || 1;
+  document.getElementById('je_result').textContent = (vol / flasks).toFixed(2) + ' mL';
+}
+
+function calcJ2Count() {
+  const counted = parseFloat(document.getElementById('jc_counted').value) || 0;
+  const squares = parseFloat(document.getElementById('jc_squares').value) || 1;
+  const vol = parseFloat(document.getElementById('jc_vol').value) || 1;
+  const perFlask = parseFloat(document.getElementById('jc_perflask').value) || 1;
+  const conc = (counted / squares) * 10000;
+  const total = conc * vol;
+  const volPerFlask = perFlask / conc;
+  const maxFlasks = Math.floor(total / perFlask);
+  document.getElementById('jc_conc').textContent = fmt(conc);
+  document.getElementById('jc_vol_per').textContent = volPerFlask.toFixed(2) + ' mL';
+  document.getElementById('jc_maxflasks').textContent = maxFlasks;
+}
+
+function calcHBEC() {
+  const counted = parseFloat(document.getElementById('h_counted').value) || 0;
+  const squares = parseFloat(document.getElementById('h_squares').value) || 1;
+  const vol = parseFloat(document.getElementById('h_vol').value) || 1;
+  const perWell = parseFloat(document.getElementById('h_perwell').value) || 500000;
+  const wells = parseFloat(document.getElementById('h_wells').value) || 1;
+  const conc = (counted / squares) * 10000;
+  const total = conc * vol;
+  const suspVol = perWell / conc;
+  const mediaVol = 2 - suspVol;
+  const warn = document.getElementById('h_warn');
+
+  document.getElementById('h_conc').textContent = fmt(conc);
+  document.getElementById('h_total').textContent = fmt(total);
+  document.getElementById('h_suspvol').textContent = suspVol > 0 ? suspVol.toFixed(2) + ' mL' : '—';
+  document.getElementById('h_mediavol').textContent = mediaVol > 0 ? mediaVol.toFixed(2) + ' mL' : '—';
+
+  const totalNeeded = perWell * wells;
+  if (total < totalNeeded) {
+    warn.className = 'note warn';
+    warn.textContent = '⚠ Not enough cells for ' + wells + ' wells — you have ' + fmt(total) + ' but need ' + fmt(totalNeeded) + '.';
+  } else {
+    warn.className = 'note';
+    warn.textContent = 'Add media to each well first, then add your cell suspension on top. Total = 2 mL per well.';
+  }
+}
+
+calcCount(); calcJ2Even(); calcJ2Count(); calcHBEC();
+</script>
+</body>
+</html>
